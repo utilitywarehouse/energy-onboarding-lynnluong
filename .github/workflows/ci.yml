@@ -1,0 +1,35 @@
+name: CI
+
+on: push
+
+jobs:
+  service:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}
+      DOCKER_ID: ${{ secrets.ENERGY_DOCKER_ID }}
+      DOCKER_PASSWORD: ${{ secrets.ENERGY_DOCKER_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17"
+          check-latest: true
+
+      - run: git config --global url."https://$GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+      # Uncomment to use a Docker compose file
+      # - name: Docker Compose
+      #   run: docker-compose up -d
+
+      - run: make install
+
+      - run: make lint
+
+      - run: make test
+
+      - name: Docker Build
+        run: make ci-docker-build

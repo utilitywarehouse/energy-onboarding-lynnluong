@@ -1,0 +1,11 @@
+development:
+  dialect: sqlite3
+  datasource: dbname=projection sslmode=disable
+  dir: internal/store/migrations
+  table: migrations
+
+production:
+  dialect: postgres
+  datasource: dbname=projection sslmode=disable
+  dir: internal/store/migrations
+  table: migrations
