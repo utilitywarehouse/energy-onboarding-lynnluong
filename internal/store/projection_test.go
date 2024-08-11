@@ -3,9 +3,14 @@ package store
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/utilitywarehouse/energy-onboarding-lynnluong/internal/models"
+	"github.com/utilitywarehouse/energy-pkg/postgres"
 )
 
 // This code uses go TestContainers, for more inoformation see: https://golang.testcontainers.org/
@@ -77,4 +82,38 @@ func TestStore_UpdateService(t *testing.T) {
 	defer store.Close()
 
 	// Start your tests here:
+	//1. Insert a service with an initial state
+	svc := models.EnergyService{
+		ServiceId:  "test_service",
+		UpdatedAt:  time.Now(),
+		OccurredAt: time.Now(),
+		State:      "initial_state",
+	}
+
+	// Add the service to the batch and commit
+	store.Begin()
+	err = store.AddToBatch(svc)
+	assert.NoError(t, err)
+	err = store.Commit(ctx)
+	assert.NoError(t, err)
+
+	// Verify that the service was inserted correctly
+	result, err := store.GetServiceById(ctx, "test_service")
+	require.NoError(t, err)
+	assert.Equal(t, "initial_state", result.State)
+
+	//2. Update the service's state
+	svc.State = "updated_state"
+
+	// Add the updated service to the batch and commit
+	store.Begin()
+	err = store.AddToBatch(svc)
+	assert.NoError(t, err)
+	err = store.Commit(ctx)
+	assert.NoError(t, err)
+
+	// Verify that the service state was updated
+	result, err = store.GetServiceById(ctx, "test_service")
+	require.NoError(t, err)
+	assert.Equal(t, "updated_state", result.State)
 }

@@ -27,7 +27,7 @@ const (
 	appDesc = "Energy onboarding task"
 
 	postgresDSN = "postgres-dsn"
-
+	
 	batchSize = "batch-size"
 )
 
@@ -75,6 +75,8 @@ func action(c *cli.Context) error {
 		return fmt.Errorf("unable to connect to service source: %w", err)
 	}
 	opsServer.Add("event-source", substratehealth.NewCheck(eventSource, "unable to consume events"))
+	
+	cons := &consumer.Consumer{Db: store}
 
 	g.Go(func() error {
 		defer log.Info("consumer finished")
@@ -83,7 +85,7 @@ func action(c *cli.Context) error {
 			c.Int(batchSize),
 			time.Second,
 			eventSource,
-			consumer.Handler(store),
+			cons.HandleBatch,
 		)
 	})
 
